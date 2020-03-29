@@ -2,6 +2,7 @@ from scrapy.crawler import CrawlerProcess
 from spiders import spider_products as products
 
 
+
 def start():
     process = CrawlerProcess()
     process.crawl(products.ComputersSpider)
