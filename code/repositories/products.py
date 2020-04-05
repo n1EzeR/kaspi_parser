@@ -1,22 +1,22 @@
 import json
-import psycopg2 as ps
-import os
-import ast
 import logging
+import os
+
+import psycopg2 as ps
 from decouple import config
-from idna import unicode
 
 from spiders.utils import _get_latest_date_in_dir
 
 
 class ProductsRepository:
+    logging.basicConfig(level=logging.INFO)
+    LOGGER = logging.getLogger()
+    allowed_categories = {'computers-list.json', 'smartphones-list.json'}
 
-    logging.basicConfig(filename= 'db.log', level=logging.DEBUG)
     def __init__(self):
         self.con = ps.connect(dbname=config('DB_NAME'), user=config('DB_USERNAME'),
-                              password=config("DB_PASS"), host=config('DB_HOST'))
+                              password=config('DB_PASS'), host=config('DB_HOST'))
         self.insert_products()
-
 
     def init_products(self):
         try:
@@ -29,51 +29,52 @@ class ProductsRepository:
                             category_id         int,
                             FOREIGN KEY (details_id) REFERENCES DETAILS (id) on delete set null ,
                             FOREIGN KEY (category_id) REFERENCES CATEGORIES(id) on delete set null 
-                )''')
-                logging.info("Products was created successfully")
-        except ps.Error as e:
-            logging.error('Could not create products table: ', e)
+                            )''')
+                self.LOGGER.info("Products was created successfully")
+        except ps.Error as exc:
+            self.LOGGER.error(f'Could not create products table:{ exc }')
+
     def get_detail_by_url(self, url):
-        postgreSQL_select_Query = "select id from DETAILS where url = %s"
+        query = "select id from DETAILS where url = %s"
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute(postgreSQL_select_Query, [url])
+                cur.execute(query, [url])
                 detail_id = cur.fetchone()
-                if (detail_id == None): return detail_id
+                if (detail_id is None): return detail_id
                 return detail_id[0]
-        except ps.Error as e:
-            logging.error('Could not create products table: ', e)
+        except ps.Error as exc:
+            self.LOGGER.warning(f'Could not get details by url: { exc }')
+
     def get_category_by_name(self, name):
-        postgreSQL_select_Query = "select id from CATEGORIES where name = %s"
+        query = "select id from CATEGORIES where name = %s"
         try:
             with self.con:
                 cur = self.con.cursor()
-                cur.execute(postgreSQL_select_Query, [name])
+                cur.execute(query, [name])
                 category_id = cur.fetchone()
-                if (category_id == None): return category_id
+                if (category_id is None): return category_id
                 return category_id[0]
-        except ps.Error as e:
-            logging.error('Could not create products table: ', e)
-
-
-
+        except ps.Error as exc:
+            self.LOGGER.warning(f'Could not get category by name: { exc }')
 
     def insert_products(self):
-        x = os.chdir('../data/products/')
-        last_date = _get_latest_date_in_dir(x)
-        data = os.listdir(os.chdir(last_date))
-        print(data)
+        # x = os.chdir('../data/products/')
+        try:
+            last_date = _get_latest_date_in_dir('../data/products')
+            data = os.listdir('../data/products/' + last_date)
+        except ps.Error as exc:
+            self.LOGGER.warning(f'Could not find data in products: { exc }')
+        print(last_date)
         for file_name in data:
             with open(file_name, 'r', encoding='utf-8') as f:
-                if (file_name == 'computers-list.json' or file_name == 'smartphones-list.json'):
+                if (file_name in self.allowed_categories):
                     products_data = json.load(f)
-                    print(file_name)
                     for products in products_data:
-                        url_of_product = products['shopLink']
-                        name_of_product = products['categoryName']
-                        details_id = self.get_detail_by_url(url_of_product)
-                        category_id = self.get_category_by_name(name_of_product)
+                        product_url = products['shopLink']
+                        product_name = products['categoryName']
+                        details_id = self.get_detail_by_url(product_url)
+                        category_id = self.get_category_by_name(product_name)
 
                         print(details_id)
                         with self.con:
@@ -82,7 +83,5 @@ class ProductsRepository:
                                 cur.execute("INSERT INTO PRODUCTS(details_id, category_id) VALUES (%s, %s)",
                                             [details_id, category_id])
                                 self.con.commit()
-                            except ps.Error as e:
-                                logging.error('Could not insert data in categories table')
-                        f.close()
-
+                            except ps.Error as exc:
+                                self.LOGGER.warning(f'Could not insert data into table: { exc }')
