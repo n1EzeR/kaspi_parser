@@ -2,22 +2,22 @@
 .env
 data/
 requests/
-code/logs
+app/logs
 
 # Byte-compiled / optimized / DLL files
-code/__pycache__/
+app/__pycache__/
 code/*.py[cod]
-code/*$py.class
-code/spiders/__pycache__/
+app/*$py.class
+app/spiders/__pycache__/
 code/spiders/*.py[cod]
-code/spiders/*$py.class
+app/spiders/*$py.class
 
 # Daryn's toys
 venv/
 myvenv/
 .DS_Store
-code/.DS_Store
-code/spiders/.DS_Store
+app/.DS_Store
+app/spiders/.DS_Store
 
 # C extensions
 code/*.so
@@ -37,7 +37,7 @@ coverage.xml
 .pytest_cache/
 
 # Scrapy stuff:
-code/.scrapy
+app/.scrapy
 
 # Sphinx documentation
 docs/_build/

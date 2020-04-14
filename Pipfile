@@ -4,11 +4,23 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+black = "*"
+mypy = "*"
+flake8 = "*"
+isort = "*"
+autoflake = "*"
 
 [packages]
 scrapy = "*"
 python-decouple = "*"
+psycopg2-binary = "*"
+sqlalchemy = "*"
+databases = "*"
 flake8 = "*"
+pydantic = "*"
+orjson = "*"
+anosql = "*"
+pandas = "*"
 
 [requires]
 python_version = "3.7"
